@@ -37,7 +37,7 @@ class VL_SSC(nn.Module):
         self.vision_encoder = build_from_configs(encoders, vision_encoder, embed_dims=embed_dims, scales=view_scales)
         self.text_encoder = ClipTransformerEncoder.from_conf(text_encoder, embed_dims=embed_dims)
 
-        neck_type = globals()[neck.get('type', None)]
+        neck_type = globals()[neck.get('type', None)] if neck else None
         self.neck = neck_type.from_conf(
             neck,
             embed_dims=embed_dims,

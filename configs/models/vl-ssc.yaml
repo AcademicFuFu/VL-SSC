@@ -14,16 +14,16 @@ model:
     type: RN50
     text_embedding_ch: 1024
     text_label: configs/text_labels/semantic_kitti_labels.txt
-  # neck:
-  #   # type: VisionLanguageNeck
-  #   # feat_domain: text
-  #   # # feat_domain: fused
-  #   # num_layers: 2
-  #   # img_pos_embeding: False
+  neck:
+    # type: VisionLanguageNeck
+    # feat_domain: text
+    # # feat_domain: fused
+    # num_layers: 2
+    # img_pos_embeding: False
 
-  #   type: VisionLanguageNeckV1
-  #   num_layers: 3
-  #   img_pos_embeding: False
+    type: VisionLanguageNeckV1
+    num_layers: 3
+    img_pos_embeding: False
 
   criterions: [ce_ssc, sem_scal, geo_scal, frustum]
 

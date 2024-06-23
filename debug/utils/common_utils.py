@@ -39,13 +39,13 @@ def init_plugin(cfg):
     plg_lib = importlib.import_module(_module_path)
 
 
-def print_detail_core(name, value):
+def print_detail_core(name, value, value_check=False):
     if isinstance(value, torch.Tensor):
         print(name, type(value), value.shape, value.device)
-        vcheck(value)
+        vcheck(value) if value_check else None
     elif isinstance(value, np.ndarray):
         print(name, type(value), value.shape)
-        vcheck(value)
+        vcheck(value) if value_check else None
     elif isinstance(value, list):
         print(name, type(value), 'length: ', len(value))
         if len(value) < 10:
@@ -66,8 +66,8 @@ def print_detail_core(name, value):
         print(name, type(value))
 
 
-def print_detail(value, name='None'):
-    print_detail_core(name, value)
+def print_detail(value, name='None', vcheck=False):
+    print_detail_core(name, value, vcheck)
     print()
 
 

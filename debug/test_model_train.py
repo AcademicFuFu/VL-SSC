@@ -8,8 +8,8 @@ from omegaconf import DictConfig, OmegaConf
 import sys
 import torch
 
-sys.path.append('/home/wangruoyu/workspace/Symphonies')
-from ssc_pl import LitModule, build_data_loaders, pre_build_callbacks, set_seed
+sys.path.append('/home/wangruoyu/workspace/VL-SSC')
+from ssc_pl import LitModule, build_data_loaders, pre_build_callbacks
 
 from debug.utils import print_detail, mem
 
@@ -22,7 +22,6 @@ def main(cfg: DictConfig):
 
     dls, meta_info = build_data_loaders(cfg.data)
     model = LitModule(**cfg, **meta_info).cuda()
-    set_seed(666)
 
     # data_iter = iter(dls[0])
     # desired_index = 2

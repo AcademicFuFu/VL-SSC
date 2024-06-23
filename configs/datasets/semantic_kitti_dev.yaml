@@ -8,6 +8,7 @@ data:
     label_root: /public/datasets/SemanticKITTI/dataset/labels
     depth_root: /public/datasets/SemanticKITTI/dataset/sequences_msnet3d_depth
     frustum_size: 8
+    dev: True
   loader:
     batch_size: 1
     num_workers: 4

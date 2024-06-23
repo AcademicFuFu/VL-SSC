@@ -4,7 +4,7 @@ import os
 
 save_root = './save/'
 
-cfg = open('./configs/semantickitti.yaml', 'r')
+cfg = open('./debug/semantickitti.yaml', 'r')
 cfg = yaml.safe_load(cfg)
 
 learning_map = cfg['learning_map']

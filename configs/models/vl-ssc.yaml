@@ -1,15 +1,30 @@
 # @package _global_
 
 model:
-  type: Symphonies
+  type: VL_SSC
   embed_dims: 128
   num_layers: 3
   view_scales: [4, 8, 16]
-  encoder:
+  vision_encoder:
     type: MMDetWrapper
     config_path: maskdino/configs/maskdino_r50_8xb2-panoptic-export.py
     custom_imports: maskdino
     checkpoint_path: backups/maskdino_r50_50e_300q_panoptic_pq53.0.pth
+  text_encoder:
+    type: RN50
+    text_embedding_ch: 1024
+    text_label: configs/text_labels/semantic_kitti_labels.txt
+  neck:
+    # type: VisionLanguageNeck
+    # feat_domain: text
+    # # feat_domain: fused
+    # num_layers: 2
+    # img_pos_embeding: False
+
+    type: VisionLanguageNeckV1
+    num_layers: 3
+    img_pos_embeding: False
+
   criterions: [ce_ssc, sem_scal, geo_scal, frustum]
 
 optimizer:

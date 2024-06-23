@@ -57,9 +57,8 @@ def interpolate_flatten(x, src_shape, dst_shape, mode='nearest'):
     elif len(x.shape) == 2:
         bs, n, c = *x.shape, 1
     assert cumprod(src_shape) == n
-    x = F.interpolate(
-        x.reshape(bs, c, *src_shape).float(), dst_shape, mode=mode,
-        align_corners=False).flatten(2).transpose(1, 2).to(x.dtype)
+    x = F.interpolate(x.reshape(bs, c, *src_shape).float(), dst_shape, mode=mode,
+                      align_corners=False).flatten(2).transpose(1, 2).to(x.dtype)
     if c == 1:
         x = x.squeeze(2)
     return x
@@ -69,6 +68,16 @@ def flatten_multi_scale_feats(feats):
     feat_flatten = torch.cat([nchw_to_nlc(feat) for feat in feats], dim=1)
     shapes = torch.stack([torch.tensor(feat.shape[2:]) for feat in feats]).to(feat_flatten.device)
     return feat_flatten, shapes
+
+
+def recover_multi_scale_feats(feats, shapes):
+    id = 0
+    feats_out = []
+    for shape in shapes:
+        id_next = id + cumprod(shape)
+        feats_out.append(nlc_to_nchw(feats[:, id:id_next], shape))
+        id = id_next
+    return feats_out
 
 
 def get_level_start_index(shapes):
@@ -157,8 +166,7 @@ def volume_rendering(
 
 
 def render_depth(volume, image_grid, K, E, vox_origin, vox_size, image_shape, depth_args):
-    sigmas, z = volume_rendering(volume, image_grid, K, E, vox_origin, vox_size, image_shape,
-                                 depth_args)
+    sigmas, z = volume_rendering(volume, image_grid, K, E, vox_origin, vox_size, image_shape, depth_args)
     beta = z[1] - z[0]
     T = torch.exp(-torch.cumsum(F.pad(sigmas[..., :-1], (1, 0)) * beta, dim=-1))
     alpha = 1 - torch.exp(-sigmas * beta)

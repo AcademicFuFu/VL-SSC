@@ -17,10 +17,9 @@ SPLITS = {
 }
 
 SEMANTIC_KITTI_CLASS_FREQ = torch.tensor([
-    5.41773033e09, 1.57835390e07, 1.25136000e05, 1.18809000e05, 6.46799000e05, 8.21951000e05,
-    2.62978000e05, 2.83696000e05, 2.04750000e05, 6.16887030e07, 4.50296100e06, 4.48836500e07,
-    2.26992300e06, 5.68402180e07, 1.57196520e07, 1.58442623e08, 2.06162300e06, 3.69705220e07,
-    1.15198800e06, 3.34146000e05
+    5.41773033e09, 1.57835390e07, 1.25136000e05, 1.18809000e05, 6.46799000e05, 8.21951000e05, 2.62978000e05, 2.83696000e05,
+    2.04750000e05, 6.16887030e07, 4.50296100e06, 4.48836500e07, 2.26992300e06, 5.68402180e07, 1.57196520e07, 1.58442623e08,
+    2.06162300e06, 3.69705220e07, 1.15198800e06, 3.34146000e05
 ])
 
 
@@ -30,9 +29,8 @@ class SemanticKITTI(Dataset):
         'class_weights':
         1 / torch.log(SEMANTIC_KITTI_CLASS_FREQ + 1e-6),
         'class_names':
-        ('empty', 'car', 'bicycle', 'motorcycle', 'truck', 'other-vehicle', 'person', 'bicyclist',
-         'motorcyclist', 'road', 'parking', 'sidewalk', 'other-ground', 'building', 'fence',
-         'vegetation', 'trunk', 'terrain', 'pole', 'traffic-sign')
+        ('empty', 'car', 'bicycle', 'motorcycle', 'truck', 'other-vehicle', 'person', 'bicyclist', 'motorcyclist', 'road',
+         'parking', 'sidewalk', 'other-ground', 'building', 'fence', 'vegetation', 'trunk', 'terrain', 'pole', 'traffic-sign')
     }
 
     def __init__(
@@ -47,10 +45,13 @@ class SemanticKITTI(Dataset):
         flip=True,
         load_pose=False,
         load_only_with_target=True,
+        dev=False,
     ):
         super().__init__()
         self.data_root = data_root
         self.label_root = label_root
+        if dev:
+            SPLITS['train'] = ('00', )
         self.sequences = SPLITS[split]
         self.split = split
 
@@ -127,9 +128,8 @@ class SemanticKITTI(Dataset):
         data['cam_K'] = cam_K
         for scale_3d in scale_3ds:
             # compute the 3D-2D mapping
-            projected_pix, fov_mask, pix_z = vox2pix(T_velo_2_cam, cam_K, self.voxel_origin,
-                                                     self.voxel_size * scale_3d, self.img_shape,
-                                                     self.scene_size)
+            projected_pix, fov_mask, pix_z = vox2pix(T_velo_2_cam, cam_K, self.voxel_origin, self.voxel_size * scale_3d,
+                                                     self.img_shape, self.scene_size)
             data[f'projected_pix_{scale_3d}'] = projected_pix
             data[f'pix_z_{scale_3d}'] = pix_z
             data[f'fov_mask_{scale_3d}'] = fov_mask
@@ -175,8 +175,7 @@ class SemanticKITTI(Dataset):
             label['frustums_masks'] = frustums_masks
             label['frustums_class_dists'] = frustums_class_dists
 
-        img_path = osp.join(self.data_root, 'dataset', 'sequences', sequence, 'image_2',
-                            frame_id + '.png')
+        img_path = osp.join(self.data_root, 'dataset', 'sequences', sequence, 'image_2', frame_id + '.png')
         img = Image.open(img_path).convert('RGB')
         img = np.asarray(img, dtype=np.float32) / 255.0
         if flip:

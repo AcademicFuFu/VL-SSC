@@ -4,8 +4,8 @@
 
 defaults:
   - datasets: semantic_kitti_dev
-  - models: vl-ssc
-  - schedules: adamw_lr2e-4_30e
+  - models: vl-ssc-dev
+  - schedules: adamw_lr2e-4_30e_dev
   - _self_
 
 hydra:
@@ -18,4 +18,3 @@ trainer:
   accelerator: gpu
   strategy: ddp_find_unused_parameters_true
   sync_batchnorm: True
-  # precision: 16-mixed

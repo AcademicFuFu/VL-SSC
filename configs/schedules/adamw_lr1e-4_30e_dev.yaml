@@ -5,12 +5,9 @@ optimizer:
   lr: 1.0e-4
   eps: 1.0e-3  # for fp16
   weight_decay: 1.0e-4
-  # paramwise_cfg:
-  #   - name: backbone
-  #     lr_mult: 0.1
 scheduler:
   type: MultiStepLR
-  milestones: [25]
+  milestones: []
   gamma: 0.1
 
 trainer:

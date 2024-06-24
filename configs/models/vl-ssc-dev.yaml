@@ -15,15 +15,15 @@ model:
     text_embedding_ch: 1024
     text_label: configs/text_labels/semantic_kitti_labels.txt
   neck:
-    # type: VisionLanguageNeck
+    type: VisionLanguageNeckV0
     # feat_domain: text
-    # # feat_domain: fused
-    # num_layers: 2
-    # img_pos_embed: False
-
-    type: VisionLanguageNeckV1
+    feat_domain: fused
     num_layers: 3
     img_pos_embed: True
+
+    # type: VisionLanguageNeckV1
+    # num_layers: 3
+    # img_pos_embed: True
 
   criterions: [ce_ssc, sem_scal, geo_scal, frustum]
 

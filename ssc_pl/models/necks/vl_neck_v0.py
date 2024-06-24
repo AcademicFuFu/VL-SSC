@@ -49,15 +49,18 @@ class VisionLanguageNeckV0(nn.Module):
 
     def forward(self, img_feats, text_feats):
         vl_feats = self.domain_transformer(img_feats, text_feats) if self.domain_transformer else img_feats
+        bs = img_feats[0].shape[0]
 
         for i, vl_feat in enumerate(vl_feats):
             b, c, h, w = vl_feat.shape
             vl_feat = vl_feat.flatten(2).transpose(1, 2).reshape(b, h * w, c)
+            img_pos = self.img_pos[i]().repeat(bs, 1, 1) if self.img_pos else None
             for layer in self.residual_transformers:
                 vl_feat = layer(
                     vl_feat,
                     text_feats.unsqueeze(0),
                     text_feats.unsqueeze(0),
+                    img_pos,
                 )
             vl_feats[i] = vl_feat.transpose(1, 2).reshape(b, c, h, w)
 
@@ -69,8 +72,12 @@ class VisionLanguageNeckV0(nn.Module):
         view_scales = kwargs.get('view_scales', None)
         num_layers = conf.get('num_layers', 1)
 
-        pos_embed_conf = conf.get('pos_embed', None)
-        img_pos = None
+        pos_embed_conf = conf.get('img_pos_embed', None)
+        img_pos = nn.ModuleList([
+            LearnableSqueezePositionalEncoding((93, 305), embed_dims, (1, 1)),
+            LearnableSqueezePositionalEncoding((47, 153), embed_dims, (1, 1)),
+            LearnableSqueezePositionalEncoding((24, 77), embed_dims, (1, 1)),
+        ]) if pos_embed_conf else None
 
         feat_domain = conf.get('feat_domain', 'text')
         if feat_domain == 'text':
@@ -84,53 +91,5 @@ class VisionLanguageNeckV0(nn.Module):
         return cls(
             domain_transformer=domain_transformer,
             residual_transformers=residual_transformers,
-            img_pos=img_pos,
-        )
-
-
-class VisionLanguageLoftrLayer(nn.Module):
-
-    def __init__(self, embed_dims):
-        super().__init__()
-        self.text_self_attn = TransformerLayer(embed_dims, 8)
-        self.vl_cross_attn = TransformerLayer(embed_dims, 8)
-        self.lv_cross_attn = TransformerLayer(embed_dims, 8)
-
-    def forward(self, img_feats, text_feats):
-        text_feats = self.text_self_attn(text_feats, text_feats, text_feats)
-        img_feats = self.vl_cross_attn(img_feats, text_feats, text_feats)
-        text_feats = self.lv_cross_attn(text_feats, img_feats, img_feats)
-        return img_feats, text_feats
-
-
-class VisionLanguageNeckV2(nn.Module):
-
-    def __init__(self, layers, img_pos):
-        super().__init__()
-        self.layers = layers
-        self.img_pos = img_pos
-
-    def forward(self, img_feats, text_feats):
-        img_feats_flatten, feat_shapes = flatten_multi_scale_feats(img_feats)
-        text_feats = text_feats.unsqueeze(0)
-        for layer in self.layers:
-            img_feats_flatten, text_feats = layer(img_feats_flatten, text_feats)
-        text_feats = text_feats.squeeze(0)
-        img_feats = recover_multi_scale_feats(img_feats_flatten, feat_shapes)
-
-        return img_feats, text_feats
-
-    @classmethod
-    def from_conf(cls, conf, **kwargs):
-        embed_dims = kwargs.get('embed_dims', None)
-        view_scales = kwargs.get('view_scales', None)
-        num_layers = conf.get('num_layers', 1)
-
-        pos_embed_conf = conf.get('pos_embed', None)
-        img_pos = None
-
-        layers = nn.ModuleList([VisionLanguageLoftrLayer(embed_dims) for _ in range(num_layers)])
-        return cls(
-            layers=layers,
             img_pos=img_pos,
         )

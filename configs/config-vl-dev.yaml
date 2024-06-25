@@ -5,7 +5,7 @@
 defaults:
   - datasets: semantic_kitti_dev
   - models: vl-ssc-dev
-  - schedules: adamw_lr2e-4_30e_dev
+  - schedules: adamw_lr2e-4_20e_dev
   - _self_
 
 hydra:

@@ -11,4 +11,4 @@ scheduler:
   gamma: 0.1
 
 trainer:
-  max_epochs: 30
+  max_epochs: 20

@@ -53,9 +53,14 @@ class VisionLanguageNeckV1(nn.Module):
         num_layers = conf.get('num_layers', 1)
 
         pos_embed_conf = conf.get('img_pos_embed', None)
-        img_pos = LearnableSqueezePositionalEncoding((37404, ), embed_dims, (1, )) if pos_embed_conf else None
+        img_pos = nn.ModuleList([
+            LearnableSqueezePositionalEncoding((93, 305), embed_dims, (1, 1)),
+            LearnableSqueezePositionalEncoding((47, 153), embed_dims, (1, 1)),
+            LearnableSqueezePositionalEncoding((24, 77), embed_dims, (1, 1)),
+        ]) if pos_embed_conf else None
 
-        layers = nn.ModuleList([VisionLanguageLoftrLayer(embed_dims) for _ in range(num_layers)])
+        layers = nn.ModuleList(
+            [nn.ModuleList([VisionLanguageLoftrLayer(embed_dims) for _ in range(len(view_scales))]) for _ in range(num_layers)])
         return cls(
             layers=layers,
             img_pos=img_pos,

@@ -16,9 +16,7 @@ def main(args):
             if epoch % d == 0:
                 print()
     files = os.listdir(folder)
-    pth = [file for file in files if '.pth' in file]
-    for p in pth:
-        print('best: {}'.format(p))
+    print(files)
 
     return
 

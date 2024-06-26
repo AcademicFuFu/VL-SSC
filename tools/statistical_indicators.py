@@ -16,6 +16,7 @@ def main(args):
             if epoch % d == 0:
                 print()
     files = os.listdir(folder)
+
     print(files)
 
     return

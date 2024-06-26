@@ -27,7 +27,7 @@ class VisionLanguageLoftrLayer(nn.Module):
         return img_feats, text_feats
 
 
-class VisionLanguageNeckV1(nn.Module):
+class VisionLanguageNeckV4(nn.Module):
 
     def __init__(self, layers, img_pos):
         super().__init__()
@@ -35,15 +35,20 @@ class VisionLanguageNeckV1(nn.Module):
         self.img_pos = img_pos
 
     def forward(self, img_feats, text_feats):
-        img_feats_flatten, feat_shapes = flatten_multi_scale_feats(img_feats)
-        bs = img_feats[0].shape[0]
-        img_pos = self.img_pos().repeat(bs, 1, 1) if self.img_pos else None
+        img_pos = [self.img_pos[i]() for i in range(len(img_feats))] if self.img_pos else None
         text_feats = text_feats.unsqueeze(0)
-        for layer in self.layers:
-            img_feats_flatten, text_feats = layer(img_feats_flatten, text_feats, img_pos)
-        text_feats = text_feats.squeeze(0)
-        img_feats = recover_multi_scale_feats(img_feats_flatten, feat_shapes)
-
+        for i, img_feat in enumerate(img_feats):
+            b, c, h, w = img_feat.shape
+            img_feat = img_feat.flatten(2).transpose(1, 2).reshape(b, h * w, c)
+            pos_embed = img_pos[i].repeat(b, 1, 1) if self.img_pos else None
+            for layer in self.layers:
+                img_feat, text_feats = layer[i](
+                    img_feat,
+                    text_feats,
+                    pos_embed,
+                )
+            img_feats[i] = img_feat.transpose(1, 2).reshape(b, c, h, w)
+        text_feats = text_feats.squeeze()
         return img_feats, text_feats
 
     @classmethod

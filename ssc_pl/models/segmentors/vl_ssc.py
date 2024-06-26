@@ -5,29 +5,30 @@ from ... import build_from_configs
 from .. import encoders
 from ..encoders.text_encoder import ClipTransformerEncoder
 from ..necks import *
-from ..decoders import SymphoniesDecoder
+from ..decoders import *
 from ..losses import ce_ssc_loss, frustum_proportion_loss, geo_scal_loss, sem_scal_loss
 
 
 class VL_SSC(nn.Module):
 
     def __init__(
-            self,
-            vision_encoder,
-            text_encoder,
-            embed_dims,
-            scene_size,
-            view_scales,
-            volume_scale,
-            num_classes,
-            num_layers=3,
-            image_shape=(370, 1220),
-            neck=None,
-            voxel_size=0.2,
-            downsample_z=2,
-            class_weights=None,
-            criterions=None,
-            **kwargs,
+        self,
+        vision_encoder,
+        text_encoder,
+        embed_dims,
+        scene_size,
+        view_scales,
+        volume_scale,
+        num_classes,
+        num_layers=3,
+        image_shape=(370, 1220),
+        neck=None,
+        decoder=None,
+        voxel_size=0.2,
+        downsample_z=2,
+        class_weights=None,
+        criterions=None,
+        **kwargs,
     ):
         super().__init__()
         self.volume_scale = volume_scale
@@ -45,15 +46,28 @@ class VL_SSC(nn.Module):
             view_scales=view_scales,
         ) if neck else None
 
-        self.decoder = SymphoniesDecoder(embed_dims,
-                                         num_classes,
-                                         num_layers=num_layers,
-                                         num_levels=len(view_scales),
-                                         scene_shape=scene_size,
-                                         project_scale=volume_scale,
-                                         image_shape=image_shape,
-                                         voxel_size=voxel_size,
-                                         downsample_z=downsample_z)
+        if decoder:
+            decoder_type = globals()[decoder.get('type', None)]
+            self.decoder = decoder_type.from_conf(decoder,
+                                                  embed_dims=embed_dims,
+                                                  num_classes=num_classes,
+                                                  num_layers=num_layers,
+                                                  num_levels=len(view_scales),
+                                                  scene_shape=scene_size,
+                                                  project_scale=volume_scale,
+                                                  image_shape=image_shape,
+                                                  voxel_size=voxel_size,
+                                                  downsample_z=downsample_z)
+        else:
+            self.decoder = SymphoniesDecoder(embed_dims,
+                                             num_classes,
+                                             num_layers=num_layers,
+                                             num_levels=len(view_scales),
+                                             scene_shape=scene_size,
+                                             project_scale=volume_scale,
+                                             image_shape=image_shape,
+                                             voxel_size=voxel_size,
+                                             downsample_z=downsample_z)
 
     def forward(self, inputs):
         pred_insts = self.vision_encoder(inputs['img'])

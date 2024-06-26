@@ -50,6 +50,7 @@ class SemanticKITTI(Dataset):
         super().__init__()
         self.data_root = data_root
         self.label_root = label_root
+        self.dev = dev
         if dev:
             SPLITS['train'] = ('00', )
         self.sequences = SPLITS[split]
@@ -142,6 +143,8 @@ class SemanticKITTI(Dataset):
             if flip:
                 target = np.flip(target, axis=1).copy()
             label['target'] = target
+            if self.dev:
+                data['target'] = target
 
         if self.context_prior:
             target_8_path = osp.join(self.label_root, sequence, frame_id + '_1_8.npy')

@@ -59,7 +59,6 @@ class VisionLanguageNeckV3(nn.Module):
     @classmethod
     def from_conf(cls, conf, **kwargs):
         embed_dims = kwargs.get('embed_dims', None)
-        view_scales = kwargs.get('view_scales', None)
         num_layers = conf.get('num_layers', 1)
 
         pos_embed_conf = conf.get('img_pos_embed', None)

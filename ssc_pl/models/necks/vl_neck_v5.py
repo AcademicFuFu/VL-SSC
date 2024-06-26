@@ -27,7 +27,7 @@ class VisionLanguageLoftrLayer(nn.Module):
         return img_feats, text_feats
 
 
-class VisionLanguageNeckV1(nn.Module):
+class VisionLanguageNeckV5(nn.Module):
 
     def __init__(self, layers, img_pos):
         super().__init__()
@@ -49,7 +49,6 @@ class VisionLanguageNeckV1(nn.Module):
     @classmethod
     def from_conf(cls, conf, **kwargs):
         embed_dims = kwargs.get('embed_dims', None)
-        view_scales = kwargs.get('view_scales', None)
         num_layers = conf.get('num_layers', 1)
 
         pos_embed_conf = conf.get('img_pos_embed', None)

@@ -19,13 +19,13 @@ model:
     # num_layers: 3
     # img_pos_embed: False
 
-    type: VisionLanguageNeckV1
-    num_layers: 3
-    img_pos_embed: False
+    # type: VisionLanguageNeckV1
+    # num_layers: 3
+    # img_pos_embed: False
 
-    # type: VisionLanguageNeckV2
-    # num_layers: 2
-    # img_pos_embed: True
+    type: VisionLanguageNeckV2
+    num_layers: 2
+    img_pos_embed: True
 
     # type: VisionLanguageNeckV3
     # num_layers: 2
@@ -34,6 +34,14 @@ model:
     # type: VisionLanguageNeckV4
     # num_layers: 3
     # img_pos_embed: True
+
+    # type: VisionLanguageNeckV5
+    # num_layers: 3
+    # img_pos_embed: True
+  # decoder:
+  #   type: VisionLanguageDecoderV0
+  #   downsample_xyz: [1, 1, 2]
+
   criterions: [ce_ssc, sem_scal, geo_scal, frustum]
 
 optimizer:

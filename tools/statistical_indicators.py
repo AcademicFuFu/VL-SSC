@@ -5,10 +5,20 @@ import argparse
 
 def main(args):
     folder = args.folder
+    d = 3
     with open(os.path.join(folder, 'log.txt'), 'r') as f:
         val_lines = [line for line in f if 'val' in line]
-        for line in val_lines:
-            print(line)
+        for epoch, line in enumerate(val_lines):
+            for item in line.split(','):
+                if 'mIoU' in item:
+                    mIou = float(item.split()[-1])
+                    print('epoch {}, mIou: {}'.format(str(epoch).zfill(2), str(mIou).zfill(5)), end='   ')
+            if epoch % d == 0:
+                print()
+    files = os.listdir(folder)
+    pth = [file for file in files if '.pth' in file]
+    for p in pth:
+        print('best: {}'.format(p))
 
     return
 

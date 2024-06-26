@@ -8,11 +8,13 @@ def main(args):
     d = 3
     with open(os.path.join(folder, 'log.txt'), 'r') as f:
         val_lines = [line for line in f if 'val' in line]
-        for epoch, line in enumerate(val_lines):
+        for line in val_lines:
             for item in line.split(','):
+                if 'epoch' in item:
+                    epoch = int(item.split()[-1])
                 if 'mIoU' in item:
                     mIou = float(item.split()[-1])
-                    print('epoch {}, mIou: {}'.format(str(epoch).zfill(2), str(mIou).zfill(5)), end='   ')
+            print('epoch {}, mIou: {}'.format(str(epoch).zfill(2), str(mIou).zfill(5)), end='   ')
             if epoch % d == 0:
                 print()
     files = os.listdir(folder)

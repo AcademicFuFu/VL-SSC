@@ -1,6 +1,7 @@
 import copy
 from itertools import product
 
+import pdb
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,6 +12,8 @@ from ..layers import (ASPP, DeformableSqueezeAttention, DeformableTransformerLay
 from ..projections import VoxelProposalLayer
 from ..utils import (cumprod, flatten_fov_from_voxels, flatten_multi_scale_feats, generate_grid, get_level_start_index,
                      index_fov_back_to_voxels, interpolate_flatten, nchw_to_nlc, nlc_to_nchw, pix2vox)
+
+from debug.utils import print_detail as pd, mem
 
 
 class SymphoniesLayer(nn.Module):
@@ -84,6 +87,24 @@ class SymphoniesLayer(nn.Module):
         return scene_embed, inst_queries
 
 
+def get_logit_by_gt(target: torch.Tensor):
+    gt = target.squeeze().flatten().to(torch.int64)
+    mask_invalid = gt == 255
+    gt[mask_invalid] = 0
+
+    logit = torch.zeros(gt.shape[0], 20, device=gt.device, dtype=gt.dtype)
+    m = torch.zeros_like(logit)
+    m.scatter_(1, gt.unsqueeze(-1), 1)
+    logit[m.bool()] = 10
+    logit[~m.bool()] = -10
+    logit[mask_invalid] = 0
+
+    h, w, z = target.shape[1:]
+    logit = logit.view(1, h, w, z, 20).permute(0, 4, 1, 2, 3).contiguous()
+
+    return logit
+
+
 class VisionLanguageDecoderV0(nn.Module):
 
     def __init__(self,
@@ -125,7 +146,7 @@ class VisionLanguageDecoderV0(nn.Module):
 
         self.aspp = ASPP(embed_dims, (1, 3))
         assert project_scale in (1, 2)
-        self.cls_head = nn.Sequential(
+        self.upsample = nn.Sequential(
             nn.Sequential(
                 nn.ConvTranspose3d(
                     embed_dims,
@@ -139,10 +160,12 @@ class VisionLanguageDecoderV0(nn.Module):
                 nn.ReLU(),
             ) if downsample_z != 1 else nn.Identity(),
             Upsample(embed_dims, embed_dims) if project_scale == 2 else nn.Identity(),
-            nn.Conv3d(embed_dims, num_classes, kernel_size=1))
+        )
+        self.cls_head = nn.Sequential(nn.Conv3d(embed_dims + num_classes, num_classes, kernel_size=1))
 
     @autocast(dtype=torch.float32)
-    def forward(self, pred_insts, feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask):
+    def forward(self, pred_insts, feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask, gt=None):
+
         inst_queries = pred_insts['queries']  # bs, n, c
         inst_pos = pred_insts.get('query_pos', None)
         bs = inst_queries.shape[0]
@@ -177,8 +200,11 @@ class VisionLanguageDecoderV0(nn.Module):
                                               fov_mask)
             if i == 2:
                 scene_embed = self.aspp(scene_embed)
-            if self.training or i == len(self.layers) - 1:
-                outs.append(self.cls_head(scene_embed))
+            # if self.training or i == len(self.layers) - 1:
+            if (self.training and i == 0) or i == len(self.layers) - 1:
+                vox_feats = self.upsample(scene_embed)
+                inner_prod_logit = get_logit_by_gt(gt)
+                outs.append(self.cls_head(torch.cat([vox_feats, inner_prod_logit], dim=1)))
         return outs
 
     def generate_vol_ref_pts_from_masks(self, pred_boxes, pred_masks, vol_pts):

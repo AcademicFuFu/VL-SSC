@@ -73,6 +73,8 @@ class VL_SSC(nn.Module):
         pred_insts = self.vision_encoder(inputs['img'])
         pred_masks = pred_insts.pop('pred_masks', None)
         img_feats = pred_insts.pop('feats')
+        if 'target' in inputs.keys():
+            gt = inputs['target']
 
         text_feats = self.text_encoder(inputs['img'].device)
 
@@ -82,7 +84,7 @@ class VL_SSC(nn.Module):
             map(lambda k: inputs[k], ('depth', 'cam_K', 'cam_pose', 'voxel_origin', f'projected_pix_{self.volume_scale}',
                                       f'fov_mask_{self.volume_scale}')))
 
-        outs = self.decoder(pred_insts, img_feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask)
+        outs = self.decoder(pred_insts, img_feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask, gt)
         return {'ssc_logits': outs[-1], 'aux_outputs': outs}
 
     def loss(self, preds, target):

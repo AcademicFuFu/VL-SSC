@@ -1,0 +1,50 @@
+# @package _global_
+
+model:
+  type: VL_SSC
+  embed_dims: 128
+  num_layers: 3
+  view_scales: [4, 8, 16]
+  vision_encoder:
+    type: MMDetWrapper
+    config_path: maskdino/configs/maskdino_r50_8xb2-panoptic-export.py
+    custom_imports: maskdino
+    checkpoint_path: backups/maskdino_r50_50e_300q_panoptic_pq53.0.pth
+  text_encoder:
+    type: RN50
+    text_embedding_ch: 1024
+    text_label: configs/text_labels/semantic_kitti_labels.txt
+  # neck:
+  #   # type: VisionLanguageNeckV0
+  #   # num_layers: 3
+  #   # img_pos_embed: False
+
+  #   # type: VisionLanguageNeckV1
+  #   # num_layers: 3
+  #   # img_pos_embed: False
+
+  #   # type: VisionLanguageNeckV2
+  #   # num_layers: 2
+  #   # img_pos_embed: True
+
+  #   # type: VisionLanguageNeckV3
+  #   # num_layers: 2
+  #   # img_pos_embed: True
+
+  #   # type: VisionLanguageNeckV4
+  #   # num_layers: 3
+  #   # img_pos_embed: True
+
+  #   # type: VisionLanguageNeckV5
+  #   # num_layers: 3
+  #   # img_pos_embed: True
+  decoder:
+    type: VisionLanguageDecoderV0
+    downsample_xyz: [1, 1, 2]
+
+  criterions: [ce_ssc, sem_scal, geo_scal, frustum]
+
+optimizer:
+  paramwise_cfg:
+    - name: vision_encoder.model
+      lr_mult: 0.1

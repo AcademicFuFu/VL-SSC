@@ -15,7 +15,12 @@ class SSCMetrics(Metric):
             self.add_state(metric, torch.zeros(num_classes), dist_reduce_fx='sum')
 
     def update(self, preds, target):
-        preds = torch.argmax(preds['ssc_logits'], dim=1)
+        # import pdb
+        # pdb.set_trace()
+        if isinstance(preds['ssc_logits'], list):
+            preds = torch.argmax(preds['ssc_logits'][0], dim=1)
+        else:
+            preds = torch.argmax(preds['ssc_logits'], dim=1)
         target = target['target']
         mask = target != self.ignore_index
 

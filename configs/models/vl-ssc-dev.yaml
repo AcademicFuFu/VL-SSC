@@ -27,13 +27,13 @@ model:
     # num_layers: 2
     # img_pos_embed: True
 
-    type: VisionLanguageNeckV3
-    num_layers: 2
-    img_pos_embed: True
-
-    # type: VisionLanguageNeckV4
-    # num_layers: 3
+    # type: VisionLanguageNeckV3
+    # num_layers: 2
     # img_pos_embed: True
+
+    type: VisionLanguageNeckV4
+    num_layers: 3
+    img_pos_embed: True
 
     # type: VisionLanguageNeckV5
     # num_layers: 3

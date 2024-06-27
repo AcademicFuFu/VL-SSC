@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 import pdb
 
 from ... import build_from_configs
@@ -84,7 +85,7 @@ class VL_SSC(nn.Module):
             map(lambda k: inputs[k], ('depth', 'cam_K', 'cam_pose', 'voxel_origin', f'projected_pix_{self.volume_scale}',
                                       f'fov_mask_{self.volume_scale}')))
 
-        outs = self.decoder(pred_insts, img_feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask, gt)
+        outs = self.decoder(pred_insts, img_feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask, gt, text_feats)
         return {'ssc_logits': outs[-1], 'aux_outputs': outs}
 
     def loss(self, preds, target):
@@ -95,13 +96,21 @@ class VL_SSC(nn.Module):
             'frustum': frustum_proportion_loss
         }
 
-        target['class_weights'] = self.class_weights.type_as(preds['ssc_logits'])
+        weights_type_as = preds['ssc_logits'] if isinstance(preds['ssc_logits'], torch.Tensor) else preds['ssc_logits'][0]
+        target['class_weights'] = self.class_weights.type_as(weights_type_as)
         losses = {}
         if 'aux_outputs' in preds:
             for i, pred in enumerate(preds['aux_outputs']):
                 scale = 1 if i == len(preds['aux_outputs']) - 1 else 0.5
                 for loss in self.criterions:
-                    losses['loss_' + loss + '_' + str(i)] = loss_map[loss]({'ssc_logits': pred}, target) * scale
+                    if isinstance(pred, list):
+                        for j, p in enumerate(pred):
+                            logit = 'cls_head' if j == 0 else 'inner_prod'
+                            losses['loss_' + loss + '_' + str(i) + '_' + logit] = loss_map[loss]({
+                                'ssc_logits': p
+                            }, target) * scale
+                    else:
+                        losses['loss_' + loss + '_' + str(i)] = loss_map[loss]({'ssc_logits': pred}, target) * scale
         else:
             for loss in self.criterions:
                 losses['loss_' + loss] = loss_map[loss](preds, target)

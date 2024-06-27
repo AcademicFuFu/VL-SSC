@@ -164,7 +164,18 @@ class VisionLanguageDecoderV0(nn.Module):
         self.cls_head = nn.Sequential(nn.Conv3d(embed_dims + num_classes, num_classes, kernel_size=1))
 
     @autocast(dtype=torch.float32)
-    def forward(self, pred_insts, feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask, gt=None):
+    def forward(self,
+                pred_insts,
+                feats,
+                pred_masks,
+                depth,
+                K,
+                E,
+                voxel_origin,
+                projected_pix,
+                fov_mask,
+                gt=None,
+                text_feats=None):
 
         inst_queries = pred_insts['queries']  # bs, n, c
         inst_pos = pred_insts.get('query_pos', None)
@@ -203,8 +214,9 @@ class VisionLanguageDecoderV0(nn.Module):
             # if self.training or i == len(self.layers) - 1:
             if (self.training and i == 0) or i == len(self.layers) - 1:
                 vox_feats = self.upsample(scene_embed)
-                inner_prod_logit = get_logit_by_gt(gt)
-                outs.append(self.cls_head(torch.cat([vox_feats, inner_prod_logit], dim=1)))
+                # inner_prod_logit = get_logit_by_gt(gt)
+                inner_prod_logit = (vox_feats.permute(0, 2, 3, 4, 1) @ text_feats.t()).permute(0, 4, 1, 2, 3)
+                outs.append([self.cls_head(torch.cat([vox_feats, inner_prod_logit], dim=1)), inner_prod_logit])
         return outs
 
     def generate_vol_ref_pts_from_masks(self, pred_boxes, pred_masks, vol_pts):

@@ -144,7 +144,18 @@ class SymphoniesDecoder(nn.Module):
             nn.Conv3d(embed_dims, num_classes, kernel_size=1))
 
     @autocast(dtype=torch.float32)
-    def forward(self, pred_insts, feats, pred_masks, depth, K, E, voxel_origin, projected_pix, fov_mask, gt=None):
+    def forward(self,
+                pred_insts,
+                feats,
+                pred_masks,
+                depth,
+                K,
+                E,
+                voxel_origin,
+                projected_pix,
+                fov_mask,
+                gt=None,
+                text_feats=None):
         inst_queries = pred_insts['queries']  # bs, n, c
         inst_pos = pred_insts.get('query_pos', None)
         bs = inst_queries.shape[0]

@@ -38,8 +38,11 @@ model:
   #   # type: VisionLanguageNeckV5
   #   # num_layers: 3
   #   # img_pos_embed: True
+  # decoder:
+  #   type: VisionLanguageDecoderV0
+  #   downsample_xyz: [1, 1, 2]
   decoder:
-    type: VisionLanguageDecoderV0
+    type: VisionLanguageDecoderV1
     downsample_xyz: [1, 1, 2]
 
   criterions: [ce_ssc, sem_scal, geo_scal, frustum]
